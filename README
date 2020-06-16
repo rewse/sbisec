@@ -1,0 +1,4 @@
+[USAGE] sbisec [-V] <USERNAME> <PASSWORD>
+
+OPTION:
+    -V, --version         Output version information and exit
