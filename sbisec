@@ -165,7 +165,7 @@ def main():
     shares = obtain_shares(html)
 
     for d in shares:
-        print("%s	%s" % (d["name"], d["shares"]))
+        print("%s,%s" % (d["name"], d["shares"]))
 
     exit(0)
 
