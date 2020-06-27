@@ -146,7 +146,7 @@ def obtain_shares(html):
         v = tag.get_text(strip = True)
 
         if i % 2 == 0:
-            name = v.replace("\u3000", " ")
+            name = v.replace("\u3000", " ").replace(" ", "_")
         else:
             out.append({"name": name, "shares": v.replace(",", "")})
 
