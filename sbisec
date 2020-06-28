@@ -7,7 +7,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2020 Shibata, Tats
+# Copyright (c) Shibata, Tats
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@
 ###############################################################################
 # {{{ const
 
-__version__ = "1.0"
+__version__ = "2.0"
 
 LOGIN_URL = "https://www.sbisec.co.jp/ETGate"
 
@@ -42,6 +42,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import getopt
 import sys
+import urllib.parse
 
 # }}}
 # {{{ usage()
@@ -110,7 +111,7 @@ def obtain_html(username, password):
     o.add_argument("--headless")
 
     try:
-        driver = webdriver.Chrome(options=o)
+        driver = webdriver.Chrome(options = o)
 
         # Login
         driver.get(LOGIN_URL)
@@ -129,26 +130,29 @@ def obtain_html(username, password):
         driver.quit()
 
 # }}}
-# {{{ obtain_shares()
+# {{{ obtain_funds()
 
-def obtain_shares(html):
+def obtain_funds(html):
     soup = BeautifulSoup(html, "html.parser")
-    tags = soup.select(
-        "table[bgcolor='#9fbf99'] td[bgcolor='#eaf4e8']:nth-child(2), "
-        "table[bgcolor='#9fbf99'] td[bgcolor='#eaf4e8']:nth-child(4), "
-        "table[bgcolor='#9fbf99'] td[bgcolor='#ffffff']:nth-child(2), "
-        "table[bgcolor='#9fbf99'] td[bgcolor='#ffffff']:nth-child(4)"
+    anchors = soup.select(
+        "table[bgcolor='#9fbf99'] td[bgcolor='#ffffff']:nth-child(2) a, "
+        "table[bgcolor='#9fbf99'] td[bgcolor='#eaf4e8']:nth-child(2) a"
+    )
+    shares = soup.select(
+        "table[bgcolor='#9fbf99'] td[bgcolor='#ffffff']:nth-child(4), "
+        "table[bgcolor='#9fbf99'] td[bgcolor='#eaf4e8']:nth-child(4)"
     )
 
     out = []
     i = 0
-    for tag in tags:
-        v = tag.get_text(strip = True)
+    for anchor in anchors:
+        fund_id = urllib.parse.parse_qs(
+            urllib.parse.urlparse(anchor.get("href")).query
+        )["fund_sec_code"][0]
 
-        if i % 2 == 0:
-            name = v.replace("\u3000", " ").replace(" ", "_")
-        else:
-            out.append({"name": name, "shares": v.replace(",", "")})
+        share = shares[i].get_text(strip = True).replace(",", "")
+
+        out.append({"id": fund_id, "shares": share})
 
         i = i + 1
 
@@ -162,10 +166,10 @@ def main():
 
     html = obtain_html(opt.username, opt.password)
 
-    shares = obtain_shares(html)
+    funds = obtain_funds(html)
 
-    for d in shares:
-        print("%s,%s" % (d["name"], d["shares"]))
+    for fund in funds:
+        print("%s,%s" % (fund["id"], fund["shares"]))
 
     exit(0)
 
